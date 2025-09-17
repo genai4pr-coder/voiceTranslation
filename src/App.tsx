@@ -196,8 +196,148 @@ function App() {
     setError('');
     
     try {
-      // Using LibreTranslate API (free, no API key required)
-      const response = await fetch('https://libretranslate.de/translate', {
+      // Using LibreTranslate API with fallback endpoints
+      const endpoints = [
+        'https://translate.argosopentech.com/translate',
+        'https://libretranslate.com/translate',
+        'https://translate.terraprint.co/translate'
+      ];
+      
+      let response;
+      let lastError;
+      
+      for (const endpoint of endpoints) {
+        try {
+          console.log('🌐 Trying endpoint:', endpoint);
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              q: originalText,
+              source: inputLanguage,
+              target: outputLanguage,
+              format: 'text'
+            })
+          });
+          
+          if (response.ok) {
+            console.log('✅ Successfully connected to:', endpoint);
+            break;
+          } else {
+            console.log('❌ Endpoint failed:', endpoint, response.status);
+            lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        } catch (err) {
+          console.log('❌ Endpoint unreachable:', endpoint, err);
+          lastError = err;
+          response = null;
+        }
+      }
+      
+      if (!response || !response.ok) {
+        throw lastError || new Error('All translation endpoints failed');
+      }
+      
+      const data = await response.json();
+      
+      if (data.translatedText) {
+        console.log('✅ Translation successful:', data.translatedText);
+        setTranslatedText(data.translatedText);
+      } else {
+        console.error('❌ Translation API error:', data);
+        throw new Error('Translation failed');
+      }
+    } catch (err) {
+      console.error('❌ Translation request failed:', err);
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError('Unable to connect to translation service. Please check your internet connection or try again later.');
+      } else {
+        setError('Translation failed. Please try again.');
+      }
+      console.error('Translation error:', err);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const translateAgentReply = async () => {
+    if (!agentReply.trim()) return;
+    
+    console.log('🔄 Starting agent reply translation...');
+    console.log('Agent reply:', agentReply);
+    console.log('From:', outputLanguage, 'To:', inputLanguage);
+    
+    setIsTranslatingReply(true);
+    setError('');
+    
+    try {
+      // Using LibreTranslate API with fallback endpoints
+      const endpoints = [
+        'https://translate.argosopentech.com/translate',
+        'https://libretranslate.com/translate',
+        'https://translate.terraprint.co/translate'
+      ];
+      
+      let response;
+      let lastError;
+      
+      for (const endpoint of endpoints) {
+        try {
+          console.log('🌐 Trying endpoint for agent reply:', endpoint);
+          response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              q: agentReply,
+              source: outputLanguage,
+              target: inputLanguage,
+              format: 'text'
+            })
+          });
+          
+          if (response.ok) {
+            console.log('✅ Successfully connected to:', endpoint);
+            break;
+          } else {
+            console.log('❌ Endpoint failed:', endpoint, response.status);
+            lastError = new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        } catch (err) {
+          console.log('❌ Endpoint unreachable:', endpoint, err);
+          lastError = err;
+          response = null;
+        }
+      }
+      
+      if (!response || !response.ok) {
+        throw lastError || new Error('All translation endpoints failed');
+      }
+      
+      const data = await response.json();
+      
+      if (data.translatedText) {
+        console.log('✅ Agent reply translation successful:', data.translatedText);
+        setAgentReplyTranslated(data.translatedText);
+      } else {
+        console.error('❌ Agent reply translation API error:', data);
+        throw new Error('Translation failed');
+      }
+    } catch (err) {
+      console.error('❌ Agent reply translation request failed:', err);
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError('Unable to connect to translation service. Please check your internet connection or try again later.');
+      } else {
+        setError('Agent reply translation failed. Please try again.');
+      }
+      console.error('Translation error:', err);
+    } finally {
+      setIsTranslatingReply(false);
+    }
+  };
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
