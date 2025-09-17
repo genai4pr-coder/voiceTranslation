@@ -196,10 +196,19 @@ function App() {
     setError('');
     
     try {
-      // Using MyMemory Translation API (free, no API key required)
-      const response = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(originalText)}&langpair=${inputLanguage}|${outputLanguage}`
-      );
+      // Using LibreTranslate API (free, no API key required)
+      const response = await fetch('https://libretranslate.de/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: originalText,
+          source: inputLanguage,
+          target: outputLanguage,
+          format: 'text'
+        })
+      });
       
       if (!response.ok) {
         throw new Error(`Translation service unavailable: ${response.status} ${response.statusText}`);
@@ -207,9 +216,9 @@ function App() {
       
       const data = await response.json();
       
-      if (data.responseStatus === 200) {
-        console.log('✅ Translation successful:', data.responseData.translatedText);
-        setTranslatedText(data.responseData.translatedText);
+      if (data.translatedText) {
+        console.log('✅ Translation successful:', data.translatedText);
+        setTranslatedText(data.translatedText);
       } else {
         console.error('❌ Translation API error:', data);
         throw new Error('Translation failed');
@@ -234,10 +243,19 @@ function App() {
     setError('');
     
     try {
-      // Translate from output language back to input language
-      const response = await fetch(
-        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(agentReply)}&langpair=${outputLanguage}|${inputLanguage}`
-      );
+      // Using LibreTranslate API - translate from output language back to input language
+      const response = await fetch('https://libretranslate.de/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          q: agentReply,
+          source: outputLanguage,
+          target: inputLanguage,
+          format: 'text'
+        })
+      });
       
       if (!response.ok) {
         throw new Error(`Translation service unavailable: ${response.status} ${response.statusText}`);
@@ -245,9 +263,9 @@ function App() {
       
       const data = await response.json();
       
-      if (data.responseStatus === 200) {
-        console.log('✅ Agent reply translation successful:', data.responseData.translatedText);
-        setAgentReplyTranslated(data.responseData.translatedText);
+      if (data.translatedText) {
+        console.log('✅ Agent reply translation successful:', data.translatedText);
+        setAgentReplyTranslated(data.translatedText);
       } else {
         console.error('❌ Agent reply translation API error:', data);
         throw new Error('Translation failed');
