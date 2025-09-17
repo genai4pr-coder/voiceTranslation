@@ -202,7 +202,7 @@ function App() {
       );
       
       if (!response.ok) {
-        throw new Error('Translation service unavailable');
+        throw new Error(`Translation service unavailable: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
@@ -240,7 +240,7 @@ function App() {
       );
       
       if (!response.ok) {
-        throw new Error('Translation service unavailable');
+        throw new Error(`Translation service unavailable: ${response.status} ${response.statusText}`);
       }
       
       const data = await response.json();
