@@ -308,15 +308,31 @@ function App() {
 
   useEffect(() => {
     if (originalText.trim()) {
-      console.log('🚀 Auto-triggering translation due to text change');
-      translateText();
+      console.log('⏱️ Debouncing translation request...');
+      const timeoutId = setTimeout(() => {
+        console.log('🚀 Auto-triggering translation due to text change');
+        translateText();
+      }, 1000); // Wait 1 second after user stops speaking
+
+      return () => {
+        console.log('🧹 Clearing translation timeout');
+        clearTimeout(timeoutId);
+      };
     }
   }, [originalText, inputLanguage, outputLanguage]);
 
   useEffect(() => {
     if (agentReply.trim()) {
-      console.log('🚀 Auto-triggering agent reply translation due to text change');
-      translateAgentReply();
+      console.log('⏱️ Debouncing agent reply translation request...');
+      const timeoutId = setTimeout(() => {
+        console.log('🚀 Auto-triggering agent reply translation due to text change');
+        translateAgentReply();
+      }, 500); // Shorter delay for manual input
+
+      return () => {
+        console.log('🧹 Clearing agent reply translation timeout');
+        clearTimeout(timeoutId);
+      };
     } else {
       console.log('🧹 Clearing agent reply translation (empty input)');
       setAgentReplyTranslated('');
