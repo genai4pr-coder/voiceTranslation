@@ -105,6 +105,7 @@ function App() {
         recognitionRef.current.lang = speechLanguageCodes[inputLanguage as keyof typeof speechLanguageCodes] || 'th-TH';
 
         recognitionRef.current.addEventListener('result', (event: SpeechRecognitionEvent) => {
+          console.log('🎯 Speech recognition result received');
           let finalTranscript = '';
           let interimTranscript = '';
 
@@ -118,24 +119,29 @@ function App() {
           }
 
           if (finalTranscript) {
+            console.log('📝 Final transcript:', finalTranscript);
             setOriginalText(prev => prev + finalTranscript);
             setInterimText('');
           } else {
+            console.log('⏳ Interim transcript:', interimTranscript);
             setInterimText(interimTranscript);
           }
         });
 
         recognitionRef.current.addEventListener('error', (event: SpeechRecognitionErrorEvent) => {
+          console.error('❌ Speech recognition error:', event.error, event.message);
           setError(`Speech recognition error: ${event.error}`);
           setIsRecording(false);
         });
 
         recognitionRef.current.addEventListener('end', () => {
+          console.log('🏁 Speech recognition ended');
           setIsRecording(false);
           setInterimText('');
         });
       }
     } else {
+      console.error('❌ Speech recognition not supported in this browser');
       setError('Speech recognition is not supported in this browser.');
     }
 
@@ -148,11 +154,14 @@ function App() {
 
   useEffect(() => {
     if (recognitionRef.current) {
+      console.log('🔧 Updating speech recognition language to:', speechLanguageCodes[inputLanguage as keyof typeof speechLanguageCodes] || 'th-TH');
       recognitionRef.current.lang = speechLanguageCodes[inputLanguage as keyof typeof speechLanguageCodes] || 'th-TH';
     }
   }, [inputLanguage]);
   const startRecording = () => {
     if (recognitionRef.current && !isRecording) {
+      console.log('🎤 Starting voice recording...');
+      console.log('Input language:', inputLanguage, '(' + (languages.find(l => l.code === inputLanguage)?.name) + ')');
       setError('');
       setIsRecording(true);
       recognitionRef.current.start();
@@ -161,11 +170,13 @@ function App() {
 
   const stopRecording = () => {
     if (recognitionRef.current && isRecording) {
+      console.log('🛑 Stopping voice recording...');
       recognitionRef.current.stop();
     }
   };
 
   const clearText = () => {
+    console.log('🧹 Clearing all text fields...');
     setOriginalText('');
     setTranslatedText('');
     setAgentReply('');
@@ -176,6 +187,10 @@ function App() {
 
   const translateText = async () => {
     if (!originalText.trim()) return;
+    
+    console.log('🔄 Starting translation...');
+    console.log('Original text:', originalText);
+    console.log('From:', inputLanguage, 'To:', outputLanguage);
     
     setIsTranslating(true);
     setError('');
@@ -193,11 +208,14 @@ function App() {
       const data = await response.json();
       
       if (data.responseStatus === 200) {
+        console.log('✅ Translation successful:', data.responseData.translatedText);
         setTranslatedText(data.responseData.translatedText);
       } else {
+        console.error('❌ Translation API error:', data);
         throw new Error('Translation failed');
       }
     } catch (err) {
+      console.error('❌ Translation request failed:', err);
       setError('Translation failed. Please try again.');
       console.error('Translation error:', err);
     } finally {
@@ -207,6 +225,10 @@ function App() {
 
   const translateAgentReply = async () => {
     if (!agentReply.trim()) return;
+    
+    console.log('🔄 Starting agent reply translation...');
+    console.log('Agent reply:', agentReply);
+    console.log('From:', outputLanguage, 'To:', inputLanguage);
     
     setIsTranslatingReply(true);
     setError('');
@@ -224,11 +246,14 @@ function App() {
       const data = await response.json();
       
       if (data.responseStatus === 200) {
+        console.log('✅ Agent reply translation successful:', data.responseData.translatedText);
         setAgentReplyTranslated(data.responseData.translatedText);
       } else {
+        console.error('❌ Agent reply translation API error:', data);
         throw new Error('Translation failed');
       }
     } catch (err) {
+      console.error('❌ Agent reply translation request failed:', err);
       setError('Agent reply translation failed. Please try again.');
       console.error('Translation error:', err);
     } finally {
@@ -237,6 +262,10 @@ function App() {
   };
 
   const speakText = (text: string, language: string) => {
+    console.log('🔊 Starting text-to-speech...');
+    console.log('Text:', text);
+    console.log('Language:', language);
+    
     if ('speechSynthesis' in window) {
       // Stop any ongoing speech
       window.speechSynthesis.cancel();
@@ -246,36 +275,50 @@ function App() {
       utterance.rate = 0.9;
       utterance.pitch = 1;
       
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
+      utterance.onstart = () => {
+        console.log('🎵 Speech synthesis started');
+        setIsSpeaking(true);
+      };
+      utterance.onend = () => {
+        console.log('🎵 Speech synthesis ended');
+        setIsSpeaking(false);
+      };
       utterance.onerror = () => {
+        console.error('❌ Speech synthesis error');
         setIsSpeaking(false);
         setError('Text-to-speech failed. Please try again.');
       };
       
       window.speechSynthesis.speak(utterance);
     } else {
+      console.error('❌ Speech synthesis not supported');
       setError('Text-to-speech is not supported in this browser.');
     }
   };
   const copyToClipboard = async (text: string) => {
     try {
+      console.log('📋 Copying to clipboard:', text.substring(0, 50) + (text.length > 50 ? '...' : ''));
       await navigator.clipboard.writeText(text);
+      console.log('✅ Successfully copied to clipboard');
     } catch (err) {
+      console.error('❌ Failed to copy to clipboard:', err);
       console.error('Failed to copy text:', err);
     }
   };
 
   useEffect(() => {
     if (originalText.trim()) {
+      console.log('🚀 Auto-triggering translation due to text change');
       translateText();
     }
   }, [originalText, inputLanguage, outputLanguage]);
 
   useEffect(() => {
     if (agentReply.trim()) {
+      console.log('🚀 Auto-triggering agent reply translation due to text change');
       translateAgentReply();
     } else {
+      console.log('🧹 Clearing agent reply translation (empty input)');
       setAgentReplyTranslated('');
     }
   }, [agentReply, inputLanguage, outputLanguage]);
