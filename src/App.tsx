@@ -225,7 +225,11 @@ function App() {
       }
     } catch (err) {
       console.error('❌ Translation request failed:', err);
-      setError('Translation failed. Please try again.');
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError('Unable to connect to translation service. Please check your internet connection or try again later.');
+      } else {
+        setError('Translation failed. Please try again.');
+      }
       console.error('Translation error:', err);
     } finally {
       setIsTranslating(false);
@@ -272,7 +276,11 @@ function App() {
       }
     } catch (err) {
       console.error('❌ Agent reply translation request failed:', err);
-      setError('Agent reply translation failed. Please try again.');
+      if (err instanceof TypeError && err.message === 'Failed to fetch') {
+        setError('Unable to connect to translation service. Please check your internet connection or try again later.');
+      } else {
+        setError('Agent reply translation failed. Please try again.');
+      }
       console.error('Translation error:', err);
     } finally {
       setIsTranslatingReply(false);
